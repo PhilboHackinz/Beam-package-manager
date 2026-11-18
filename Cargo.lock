@@ -2012,6 +2012,7 @@ dependencies = [
  "indoc",
  "itertools 0.14.0",
  "kdl",
+ "libc",
  "log",
  "moss",
  "nix 0.27.1",
