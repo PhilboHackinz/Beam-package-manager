@@ -38,6 +38,7 @@ hex.workspace = true
 humansize.workspace = true
 inventory.workspace = true
 itertools.workspace = true
+libc.workspace = true
 nix.workspace = true
 path-clean.workspace = true
 rapidfuzz = "0.5.0"

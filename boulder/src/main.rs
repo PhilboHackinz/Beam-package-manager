@@ -28,6 +28,15 @@ mod timing;
 mod upstream;
 
 fn main() {
+    // Rust ignores SIGPIPE by default, so writing to a closed pipe (e.g.
+    // `boulder --version | false`) panics in println! instead of exiting
+    // quietly. Restore the default disposition so boulder dies by SIGPIPE
+    // like a conventional Unix tool (mirrors the moss fix for issue #2).
+    #[cfg(unix)]
+    unsafe {
+        libc::signal(libc::SIGPIPE, libc::SIG_DFL);
+    }
+
     if let Err(error) = cli::process() {
         if let Some(error) = error_needs_manual_handling(&error) {
             match error {
