@@ -301,6 +301,7 @@ dependencies = [
  "humansize",
  "inventory",
  "itertools 0.14.0",
+ "libc",
  "mailparse",
  "moss",
  "nix 0.27.1",
