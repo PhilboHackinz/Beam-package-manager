@@ -11,6 +11,15 @@ mod cli;
 
 /// Main entry point
 fn main() {
+    // Rust ignores SIGPIPE by default, so writing to a closed pipe (e.g.
+    // `moss ste | false`) panics in println! instead of exiting quietly.
+    // Restore the default disposition so moss dies by SIGPIPE like a
+    // conventional Unix tool (the same approach ripgrep takes).
+    #[cfg(unix)]
+    unsafe {
+        libc::signal(libc::SIGPIPE, libc::SIG_DFL);
+    }
+
     if let Err(error) = cli::run() {
         if let Some(error) = error_needs_manual_handling(&error) {
             match error {
