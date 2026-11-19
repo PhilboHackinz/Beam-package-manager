@@ -1118,7 +1118,9 @@ pub enum Error {
     StateAlreadyActive(state::Id),
     #[error("state {0} doesn't exist")]
     StateDoesntExist(state::Id),
-    #[error("No metadata found for package {0:?}")]
+    #[error(
+        "No metadata found for package {0}: it is not present in any active repository and may have been removed since the state was created"
+    )]
     MissingMetadata(package::Id),
     #[error("Ephemeral client not allowed on installation root")]
     EphemeralInstallationRoot,

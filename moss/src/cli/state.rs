@@ -373,16 +373,27 @@ fn print_state_selections(state: State, client: &Client) -> Result<(), Error> {
         .selections
         .into_iter()
         .map(|s| {
-            let pkg = client.resolve_package(&s.package)?;
-
-            Ok(Format {
-                name: pkg.meta.name.to_string(),
-                revision: Revision {
-                    version: pkg.meta.version_identifier,
-                    release: pkg.meta.source_release,
+            let format = match client.resolve_package(&s.package) {
+                Ok(pkg) => Format {
+                    name: pkg.meta.name.to_string(),
+                    revision: Some(Revision {
+                        version: pkg.meta.version_identifier,
+                        release: pkg.meta.source_release,
+                    }),
+                    explicit: s.explicit,
                 },
-                explicit: s.explicit,
-            })
+                // A package that has left every repository must not make the
+                // whole state uninspectable: render it as unavailable and
+                // keep listing the remaining selections.
+                Err(client::Error::MissingMetadata(_)) => Format {
+                    name: s.package.to_string(),
+                    revision: None,
+                    explicit: s.explicit,
+                },
+                Err(error) => return Err(error),
+            };
+
+            Ok(format)
         })
         .collect::<Result<Vec<_>, client::Error>>()?;
 
@@ -396,11 +407,17 @@ fn print_state_selections(state: State, client: &Client) -> Result<(), Error> {
             item.name.clone().dim()
         };
         print!("{name} {:width$} ", " ");
-        println!(
-            "{}-{}",
-            item.revision.version.magenta(),
-            item.revision.release.to_string().dim(),
-        );
+        match &item.revision {
+            Some(revision) => println!(
+                "{}-{}",
+                revision.version.clone().magenta(),
+                revision.release.to_string().dim(),
+            ),
+            None => println!(
+                "{}",
+                "(metadata unavailable: package is no longer in any repository)".dim(),
+            ),
+        }
     }
     println!();
 
@@ -410,13 +427,13 @@ fn print_state_selections(state: State, client: &Client) -> Result<(), Error> {
 #[derive(Clone, Debug)]
 struct Format {
     name: String,
-    revision: Revision,
+    revision: Option<Revision>,
     explicit: bool,
 }
 
 impl Format {
     fn size(&self) -> usize {
-        self.name.len() + self.revision.size()
+        self.name.len() + self.revision.as_ref().map_or(0, Revision::size)
     }
 }
 
